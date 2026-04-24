@@ -1,0 +1,135 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(180deg, #0d1220 0%, #141a2e 60%, #1a2240 100%);
+  color: #e9edf7;
+  overflow: hidden;
+  user-select: none;
+}
+
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(0,0,0,0.25);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  z-index: 5;
+}
+#topic { font-size: 20px; font-weight: 600; letter-spacing: 0.2px; }
+#status {
+  font-size: 12px; color: #8fa2c7;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+#status.live { color: #7ee8a6; border-color: rgba(126,232,166,0.4); }
+#status.listening { color: #ffd166; border-color: rgba(255,209,102,0.4); }
+#status.error { color: #ff7a8a; border-color: rgba(255,122,138,0.4); }
+
+#board {
+  position: absolute;
+  top: 56px; bottom: 0; left: 0; right: 0;
+  padding: 56px 80px 180px 80px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 28px;
+  align-items: center;
+}
+
+.eq-card {
+  width: min(900px, 90%);
+  padding: 26px 34px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  text-align: center;
+  transform: translateY(8px);
+  opacity: 0;
+  animation: pop 350ms cubic-bezier(.2,.9,.3,1.2) forwards;
+  transition: box-shadow 200ms, border-color 200ms, transform 200ms;
+}
+.eq-card .katex { font-size: 2.1em !important; color: #f5f8ff; }
+.eq-card.flash {
+  box-shadow: 0 0 0 3px #ffd166, 0 0 40px rgba(255,209,102,0.4);
+  border-color: #ffd166;
+  transform: scale(1.02);
+}
+@keyframes pop {
+  to { transform: translateY(0); opacity: 1; }
+}
+
+#hud {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 110px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, rgba(13,18,32,0) 0%, rgba(13,18,32,0.85) 70%);
+  z-index: 4;
+}
+.hint { color: #8fa2c7; font-size: 13px; }
+.hint kbd {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 12px;
+}
+#pttBtn {
+  padding: 14px 34px;
+  font-size: 16px; font-weight: 600;
+  color: #0d1220;
+  background: linear-gradient(180deg, #ffd166, #ff9f57);
+  border: none; border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(255,159,87,0.35);
+  transition: transform 80ms, box-shadow 200ms;
+}
+#pttBtn:active, #pttBtn.talking {
+  transform: scale(0.96);
+  box-shadow: 0 0 0 4px rgba(255,209,102,0.3), 0 6px 22px rgba(255,159,87,0.5);
+}
+
+#avatar-wrap {
+  position: fixed;
+  right: 28px; bottom: 130px;
+  width: 180px; height: 220px;
+  z-index: 6;
+  pointer-events: none;
+}
+#avatar {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+  transform-origin: 50% 100%;
+  animation: idleBob 2.8s ease-in-out infinite;
+}
+@keyframes idleBob {
+  0%,100% { transform: translateY(0) rotate(-1.5deg); }
+  50%     { transform: translateY(-4px) rotate(1.5deg); }
+}
+#avatar.talking { animation: idleBob 1.2s ease-in-out infinite; }
+#avatar-label {
+  position: absolute; bottom: -6px; left: 0; right: 0;
+  text-align: center; font-size: 12px; color: #8fa2c7;
+  letter-spacing: 0.6px; text-transform: uppercase;
+}
+
+#speech-bubble {
+  position: absolute;
+  bottom: 170px; right: 20px;
+  max-width: 220px;
+  padding: 10px 14px;
+  background: white; color: #222;
+  border-radius: 14px;
+  font-size: 13px; line-height: 1.35;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  transition: opacity 200ms;
+}
+#speech-bubble.hidden { opacity: 0; pointer-events: none; }
+#speech-bubble::after {
+  content: ""; position: absolute; right: 30px; bottom: -8px;
+  border: 8px solid transparent; border-top-color: white;
+}

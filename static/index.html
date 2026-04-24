@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Sparks — Live Math Tutor</title>
+<link rel="stylesheet" href="/static/style.css" />
+<!-- KaTeX for math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header id="topbar">
+  <div id="topic">Ready when you are.</div>
+  <div id="status">disconnected</div>
+</header>
+
+<main id="board"></main>
+
+<div id="hud">
+  <div class="hint"><kbd>SPACE</kbd> to talk · release to send</div>
+  <button id="pttBtn">Hold to Talk</button>
+</div>
+
+<div id="avatar-wrap">
+  <div id="speech-bubble" class="hidden"></div>
+  <svg id="avatar" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="skin" cx="0.4" cy="0.35" r="0.8">
+        <stop offset="0%" stop-color="#ffe7c5"/>
+        <stop offset="100%" stop-color="#ffb970"/>
+      </radialGradient>
+      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="0.6"/>
+      </filter>
+    </defs>
+
+    <!-- antenna -->
+    <line x1="100" y1="20" x2="100" y2="2" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="100" cy="0" r="5" fill="#ff5470">
+      <animate attributeName="r" values="5;6;5" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- head -->
+    <ellipse id="head" cx="100" cy="110" rx="78" ry="85" fill="url(#skin)" stroke="#2a2a2a" stroke-width="3"/>
+
+    <!-- cheeks -->
+    <circle cx="45" cy="135" r="12" fill="#ff9ab0" opacity="0.55"/>
+    <circle cx="155" cy="135" r="12" fill="#ff9ab0" opacity="0.55"/>
+
+    <!-- eyes -->
+    <g id="eyes">
+      <g class="eye">
+        <ellipse class="eye-white" cx="72" cy="100" rx="14" ry="16" fill="white" stroke="#2a2a2a" stroke-width="2.5"/>
+        <circle class="pupil" cx="74" cy="104" r="6" fill="#1a1a1a"/>
+        <circle class="glint" cx="76" cy="101" r="2" fill="white"/>
+      </g>
+      <g class="eye">
+        <ellipse class="eye-white" cx="128" cy="100" rx="14" ry="16" fill="white" stroke="#2a2a2a" stroke-width="2.5"/>
+        <circle class="pupil" cx="130" cy="104" r="6" fill="#1a1a1a"/>
+        <circle class="glint" cx="132" cy="101" r="2" fill="white"/>
+      </g>
+    </g>
+
+    <!-- eyebrows -->
+    <path d="M55 78 Q72 70 89 78" stroke="#2a2a2a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M111 78 Q128 70 145 78" stroke="#2a2a2a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+    <!-- mouth (scales with audio) -->
+    <g id="mouth-group" transform="translate(100 160)">
+      <ellipse id="mouth" cx="0" cy="0" rx="22" ry="6" fill="#3a1818" stroke="#2a2a2a" stroke-width="2.5"/>
+      <path id="tongue" d="M-10 2 Q0 10 10 2" fill="#ff7a8a" opacity="0.9"/>
+    </g>
+
+    <!-- floor shadow -->
+    <ellipse cx="100" cy="210" rx="55" ry="6" fill="#000" opacity="0.2"/>
+  </svg>
+
+  <div id="avatar-label">Sparks</div>
+</div>
+
+<script src="/static/avatar.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

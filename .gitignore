@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+.env.*.local
+.venv/
+venv/
+node_modules/
+.DS_Store
+output/
+assets/*.mp3
+assets/*.wav
+assets/*.png
+.idea/
+.vscode/
