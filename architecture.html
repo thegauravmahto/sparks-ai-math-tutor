@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Livetutor — High-Level Architecture</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0d1220; color: #e9edf7;
+               font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  header {
+    padding: 28px 48px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: 0.3px; }
+  h1 + p { margin: 0; color: #8fa2c7; font-size: 14px; }
+  .diagram-wrap {
+    display: flex; justify-content: center;
+    padding: 24px 24px 48px;
+  }
+  svg.arch {
+    width: 100%;
+    max-width: 1320px;
+    height: auto;
+    display: block;
+  }
+  .legend {
+    display: flex; gap: 28px; flex-wrap: wrap;
+    padding: 6px 48px 24px;
+    font-size: 12px; color: #8fa2c7;
+  }
+  .legend .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .legend .sw {
+    width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Livetutor — High-Level Architecture</h1>
+  <p>Browser → FastAPI bridge → Gemini Live API. Native voice I/O, transcripts, and tool calls that render on a live whiteboard.</p>
+</header>
+
+<div class="legend">
+  <span class="chip"><span class="sw" style="background:#3a6df0"></span>Browser layer</span>
+  <span class="chip"><span class="sw" style="background:#7ee8a6"></span>Server layer (Python / FastAPI)</span>
+  <span class="chip"><span class="sw" style="background:#ffd166"></span>Gemini Live API</span>
+  <span class="chip"><span class="sw" style="background:#ff5470"></span>Binary audio (PCM)</span>
+  <span class="chip"><span class="sw" style="background:#8fa2c7"></span>JSON control / tool calls</span>
+</div>
+
+<div class="diagram-wrap">
+<svg class="arch" viewBox="0 0 1320 880" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Livetutor architecture diagram">
+
+  <defs>
+    <!-- arrowheads -->
+    <marker id="arr-json" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8fa2c7"/>
+    </marker>
+    <marker id="arr-bin" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff5470"/>
+    </marker>
+    <marker id="arr-tool" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee8a6"/>
+    </marker>
+
+    <!-- subtle card shadow -->
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feOffset dx="0" dy="2" result="off"/>
+      <feMerge><feMergeNode in="off"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- lane gradient -->
+    <linearGradient id="lane-browser" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1c2a55" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1c2a55" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="lane-server" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1f3a2a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#1f3a2a" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="lane-gemini" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#3a2f1a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#3a2f1a" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ═════════ LANES ═════════ -->
+  <g>
+    <rect x="30"  y="40"  width="1260" height="260" rx="14" fill="url(#lane-browser)" stroke="rgba(58,109,240,0.35)"/>
+    <rect x="30"  y="330" width="1260" height="260" rx="14" fill="url(#lane-server)"  stroke="rgba(126,232,166,0.35)"/>
+    <rect x="30"  y="620" width="1260" height="230" rx="14" fill="url(#lane-gemini)"  stroke="rgba(255,209,102,0.35)"/>
+
+    <text x="50" y="68"  fill="#8fa2c7" font-size="11" letter-spacing="2">BROWSER  ·  http://127.0.0.1:8765</text>
+    <text x="50" y="358" fill="#8fa2c7" font-size="11" letter-spacing="2">APP SERVER  ·  FastAPI + uvicorn (Python)</text>
+    <text x="50" y="648" fill="#8fa2c7" font-size="11" letter-spacing="2">GEMINI LIVE API  ·  gemini-3.1-flash-live-preview</text>
+  </g>
+
+  <!-- ═════════ BROWSER BOXES ═════════ -->
+  <!-- UI grid -->
+  <g filter="url(#soft)">
+    <rect x="70" y="90" width="300" height="180" rx="10" fill="#1a2545" stroke="#3a6df0" stroke-width="1.5"/>
+    <text x="220" y="116" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">UI Grid (HTML + CSS)</text>
+    <text x="90" y="146" fill="#cbd3e6" font-size="12">• Header · topic · step · EN/हिं</text>
+    <text x="90" y="168" fill="#cbd3e6" font-size="12">• Left: Problem panel · Transcript</text>
+    <text x="90" y="190" fill="#cbd3e6" font-size="12">• Board: KaTeX · function-plot · Rough.js</text>
+    <text x="90" y="212" fill="#cbd3e6" font-size="12">• HUD: text input · PTT · language</text>
+    <text x="90" y="240" fill="#8fa2c7" font-size="11" font-style="italic">index.html · style.css · app.js</text>
+  </g>
+
+  <!-- Avatar -->
+  <g filter="url(#soft)">
+    <rect x="400" y="90" width="220" height="180" rx="10" fill="#1a2545" stroke="#3a6df0" stroke-width="1.5"/>
+    <text x="510" y="116" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Avatar (SVG)</text>
+    <text x="420" y="146" fill="#cbd3e6" font-size="12">• Blink + idle bob</text>
+    <text x="420" y="168" fill="#cbd3e6" font-size="12">• Eye tracking mouse</text>
+    <text x="420" y="190" fill="#cbd3e6" font-size="12">• Mouth scales with RMS</text>
+    <text x="420" y="212" fill="#cbd3e6" font-size="12">  (AnalyserNode tick loop)</text>
+    <text x="420" y="240" fill="#8fa2c7" font-size="11" font-style="italic">avatar.js</text>
+  </g>
+
+  <!-- Mic capture -->
+  <g filter="url(#soft)">
+    <rect x="650" y="90" width="300" height="180" rx="10" fill="#1a2545" stroke="#ff5470" stroke-width="1.5"/>
+    <text x="800" y="116" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Mic Capture</text>
+    <text x="670" y="146" fill="#cbd3e6" font-size="12">• getUserMedia · AudioContext 16 kHz</text>
+    <text x="670" y="168" fill="#cbd3e6" font-size="12">• AudioWorklet: Float32 → Int16 PCM</text>
+    <text x="670" y="190" fill="#cbd3e6" font-size="12">• 40 ms chunks (640 samples)</text>
+    <text x="670" y="212" fill="#cbd3e6" font-size="12">• SPACE key / button = push-to-talk</text>
+    <text x="670" y="240" fill="#8fa2c7" font-size="11" font-style="italic">pcm-worklet.js</text>
+  </g>
+
+  <!-- Audio playback -->
+  <g filter="url(#soft)">
+    <rect x="980" y="90" width="300" height="180" rx="10" fill="#1a2545" stroke="#ff5470" stroke-width="1.5"/>
+    <text x="1130" y="116" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Audio Playback</text>
+    <text x="1000" y="146" fill="#cbd3e6" font-size="12">• AudioContext 24 kHz</text>
+    <text x="1000" y="168" fill="#cbd3e6" font-size="12">• BufferSource queue (playCursor)</text>
+    <text x="1000" y="190" fill="#cbd3e6" font-size="12">• AnalyserNode → avatar mouth</text>
+    <text x="1000" y="212" fill="#cbd3e6" font-size="12">• flushPlayback() on interrupt</text>
+    <text x="1000" y="240" fill="#8fa2c7" font-size="11" font-style="italic">app.js</text>
+  </g>
+
+  <!-- ═════════ SERVER BOXES ═════════ -->
+  <!-- Static files -->
+  <g filter="url(#soft)">
+    <rect x="70" y="380" width="300" height="180" rx="10" fill="#162a1d" stroke="#7ee8a6" stroke-width="1.5"/>
+    <text x="220" y="406" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Static Files + Root</text>
+    <text x="90" y="436" fill="#cbd3e6" font-size="12">• GET /  →  index.html</text>
+    <text x="90" y="458" fill="#cbd3e6" font-size="12">• GET /static/*  →  js/css/worklet</text>
+    <text x="90" y="480" fill="#cbd3e6" font-size="12">• CDNs: KaTeX · function-plot · Rough</text>
+    <text x="90" y="530" fill="#8fa2c7" font-size="11" font-style="italic">server.py (FastAPI routes)</text>
+  </g>
+
+  <!-- WS bridge -->
+  <g filter="url(#soft)">
+    <rect x="400" y="380" width="520" height="180" rx="10" fill="#162a1d" stroke="#7ee8a6" stroke-width="2"/>
+    <text x="660" y="406" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">WebSocket Bridge  —  /ws endpoint</text>
+    <text x="420" y="436" fill="#cbd3e6" font-size="12">asyncio.gather(</text>
+    <text x="440" y="458" fill="#cbd3e6" font-size="12">pump_browser_to_gemini() · PCM, text, activity markers, tool acks</text>
+    <text x="440" y="480" fill="#cbd3e6" font-size="12">pump_gemini_to_browser() · audio, transcripts, tool_call → fwd</text>
+    <text x="420" y="502" fill="#cbd3e6" font-size="12">)</text>
+    <text x="420" y="530" fill="#8fa2c7" font-size="11" font-style="italic">server.py · structured logging (LOG_LEVEL)</text>
+  </g>
+
+  <!-- Live client -->
+  <g filter="url(#soft)">
+    <rect x="950" y="380" width="330" height="180" rx="10" fill="#162a1d" stroke="#7ee8a6" stroke-width="1.5"/>
+    <text x="1115" y="406" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">google-genai SDK</text>
+    <text x="970" y="436" fill="#cbd3e6" font-size="12">• client.aio.live.connect(model, cfg)</text>
+    <text x="970" y="458" fill="#cbd3e6" font-size="12">• send_realtime_input(audio / activity)</text>
+    <text x="970" y="480" fill="#cbd3e6" font-size="12">• send_client_content(text turns)</text>
+    <text x="970" y="502" fill="#cbd3e6" font-size="12">• send_tool_response(FunctionResponse)</text>
+    <text x="970" y="524" fill="#cbd3e6" font-size="12">• async for response in session.receive()</text>
+  </g>
+
+  <!-- ═════════ GEMINI BOXES ═════════ -->
+  <g filter="url(#soft)">
+    <rect x="70" y="670" width="380" height="160" rx="10" fill="#3a2a10" stroke="#ffd166" stroke-width="1.5"/>
+    <text x="260" y="696" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Live Session (voice I/O)</text>
+    <text x="90" y="724" fill="#cbd3e6" font-size="12">• Input: 16 kHz PCM mono · manual VAD</text>
+    <text x="90" y="746" fill="#cbd3e6" font-size="12">• Output: 24 kHz PCM mono · streaming</text>
+    <text x="90" y="768" fill="#cbd3e6" font-size="12">• activity_start / activity_end = PTT</text>
+    <text x="90" y="790" fill="#cbd3e6" font-size="12">• Session ~10–15 min, then GoAway</text>
+  </g>
+
+  <g filter="url(#soft)">
+    <rect x="480" y="670" width="380" height="160" rx="10" fill="#3a2a10" stroke="#ffd166" stroke-width="1.5"/>
+    <text x="670" y="696" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Transcription (STT + TTS-text)</text>
+    <text x="500" y="724" fill="#cbd3e6" font-size="12">• input_audio_transcription  (student's STT)</text>
+    <text x="500" y="746" fill="#cbd3e6" font-size="12">• output_audio_transcription  (Sparks' text)</text>
+    <text x="500" y="768" fill="#cbd3e6" font-size="12">• Partial chunks → live chat bubbles</text>
+    <text x="500" y="790" fill="#cbd3e6" font-size="12">• Closes on turn_complete</text>
+  </g>
+
+  <g filter="url(#soft)">
+    <rect x="890" y="670" width="390" height="160" rx="10" fill="#3a2a10" stroke="#ffd166" stroke-width="1.5"/>
+    <text x="1085" y="696" fill="#e9edf7" font-size="14" font-weight="600" text-anchor="middle">Tool Calling + System Prompt</text>
+    <text x="910" y="724" fill="#cbd3e6" font-size="12">• Sparks (K12 India, NCERT, EN + Hindi)</text>
+    <text x="910" y="746" fill="#cbd3e6" font-size="12">• 12 tools: set_problem · set_step · focus ·</text>
+    <text x="910" y="768" fill="#cbd3e6" font-size="12">  write_equation · plot_function · draw_*</text>
+    <text x="910" y="790" fill="#cbd3e6" font-size="12">• Parallel calls per turn</text>
+  </g>
+
+  <!-- ═════════ ARROWS ═════════ -->
+
+  <!-- Browser UI ↔ Mic (internal) -->
+  <line x1="370" y1="180" x2="400" y2="180" stroke="#8fa2c7" stroke-width="1.5" marker-end="url(#arr-json)"/>
+  <line x1="620" y1="180" x2="650" y2="180" stroke="#8fa2c7" stroke-width="1.5" marker-end="url(#arr-json)"/>
+  <line x1="950" y1="180" x2="980" y2="180" stroke="#8fa2c7" stroke-width="1.5" marker-end="url(#arr-json)"/>
+
+  <!-- Browser → Server: mic PCM (binary, red) -->
+  <path d="M 800 270 C 800 310 700 310 660 380" fill="none" stroke="#ff5470" stroke-width="2.2" marker-end="url(#arr-bin)"/>
+  <text x="710" y="326" fill="#ff5470" font-size="11" font-weight="600">binary PCM 16 kHz</text>
+
+  <!-- Browser → Server: JSON control (ptt_start/end, text, tool_result) -->
+  <path d="M 220 270 C 220 310 380 320 460 380" fill="none" stroke="#8fa2c7" stroke-width="2" marker-end="url(#arr-json)"/>
+  <text x="220" y="326" fill="#8fa2c7" font-size="11" font-weight="600">JSON control</text>
+
+  <!-- Server → Browser: audio chunks (binary, red) -->
+  <path d="M 860 380 C 820 320 920 310 1130 270" fill="none" stroke="#ff5470" stroke-width="2.2" marker-end="url(#arr-bin)"/>
+  <text x="960" y="326" fill="#ff5470" font-size="11" font-weight="600">binary PCM 24 kHz</text>
+
+  <!-- Server → Browser: tool_call + transcripts (green) -->
+  <path d="M 600 380 C 600 320 1050 310 1130 270" fill="none" stroke="#7ee8a6" stroke-width="2" marker-end="url(#arr-tool)" stroke-dasharray="4 3"/>
+  <text x="900" y="304" fill="#7ee8a6" font-size="11" font-weight="600">tool_call · transcript · status</text>
+
+  <!-- Server ↔ Gemini (yellow) double arrow -->
+  <path d="M 660 560 L 660 670" fill="none" stroke="#ffd166" stroke-width="2.4" marker-end="url(#arr-json)"/>
+  <path d="M 720 670 L 720 560" fill="none" stroke="#ffd166" stroke-width="2.4" marker-end="url(#arr-json)"/>
+  <text x="500" y="608" fill="#ffd166" font-size="11" font-weight="600">send_realtime_input · send_client_content · send_tool_response</text>
+  <text x="700" y="624" fill="#ffd166" font-size="11" font-weight="600">▲ session.receive()  (audio · tool_call · transcripts)</text>
+
+  <!-- ═════════ LABELS ═════════ -->
+  <text x="30" y="30" fill="#e9edf7" font-size="13" font-weight="600" opacity="0.4">WebSocket flow · binary = audio PCM · JSON = control &amp; tools</text>
+</svg>
+</div>
+
+<footer style="padding: 0 48px 48px; color:#8fa2c7; font-size:12px; line-height:1.6">
+  <p><strong>One PTT turn, end-to-end:</strong></p>
+  <ol>
+    <li>User holds <kbd>SPACE</kbd>. Browser opens the mic, sends <code>{type:"ptt_start"}</code>. Server → <code>session.send_realtime_input(activity_start=ActivityStart())</code>.</li>
+    <li>AudioWorklet emits 40 ms Int16 PCM chunks at 16 kHz. Each chunk is relayed as a binary WebSocket frame → server → <code>send_realtime_input(audio=Blob(…))</code>.</li>
+    <li>User releases <kbd>SPACE</kbd>. Browser sends <code>{type:"ptt_end"}</code>. Server → <code>send_realtime_input(activity_end=ActivityEnd())</code>. Gemini begins the response.</li>
+    <li>In parallel Gemini streams back: <code>input_transcription</code> (user STT) → user bubble; <code>output_transcription</code> (Sparks text) → assistant bubble; <code>model_turn.parts[*].inline_data</code> (24 kHz PCM) → browser playback queue; <code>tool_call.function_calls[*]</code> → browser tool dispatcher → KaTeX / function-plot / Rough.js renders.</li>
+    <li>Browser acks each tool with <code>{type:"tool_result", ok:true}</code>; server has already sent an optimistic <code>FunctionResponse</code> back to Gemini.</li>
+    <li><code>turn_complete</code> closes both transcript bubbles and returns the avatar to idle.</li>
+  </ol>
+  <p><strong>Text-turn path</strong> (typed in input): <code>{type:"text", text}</code> → server → <code>send_client_content(turns=Content(user, [Part(text)]), turn_complete=True)</code>. Gemini replies with audio + tools identically; the browser adds the user bubble locally since it already knows the text (no STT needed).</p>
+</footer>
+
+</body>
+</html>

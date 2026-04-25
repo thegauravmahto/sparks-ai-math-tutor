@@ -1,4 +1,4 @@
-// Avatar animation: mouth scales with audio amplitude, blinking, eye tracking mouse.
+// Avatar animation: mouth scales with audio, blinking, eye tracking mouse.
 (() => {
   const svg = document.getElementById("avatar");
   const mouth = document.getElementById("mouth");
@@ -12,62 +12,58 @@
   let currentAmp = 0;
 
   window.setMouthAmplitude = function (amp) {
-    // amp: 0..1
     targetAmp = Math.min(1, Math.max(0, amp));
   };
 
   function animateMouth() {
-    // Smooth easing toward target
     currentAmp += (targetAmp - currentAmp) * 0.35;
-    const ry = 6 + currentAmp * 22;    // base 6 → up to 28
-    const rx = 22 - currentAmp * 4;    // slightly narrower when open
+    // Lip-sync: grows inside full lip outline via clipPath so it never escapes.
+    const ry = 0.7 + currentAmp * 8;    // closed seam → open
+    const rx = 12  - currentAmp * 2.5;
     mouth.setAttribute("ry", ry.toFixed(2));
     mouth.setAttribute("rx", rx.toFixed(2));
-    // Tongue follows
-    const ty = 2 + currentAmp * 8;
-    tongue.setAttribute("d", `M-10 ${ty - 2} Q0 ${ty + 6} 10 ${ty - 2}`);
-    tongue.setAttribute("opacity", 0.6 + currentAmp * 0.4);
+    // Tongue peeks only when wide open
+    tongue.setAttribute("opacity", (currentAmp > 0.4 ? currentAmp * 0.8 : 0).toFixed(2));
     requestAnimationFrame(animateMouth);
   }
   animateMouth();
 
-  // --- Blinking ---
+  // --- Blinking (eye squishes flat then restores to ry=7) ---
+  const OPEN_RY = 7;
   function blink() {
-    eyeWhites.forEach((e) => e.setAttribute("ry", "1.5"));
+    eyeWhites.forEach((e) => e.setAttribute("ry", "0.6"));
     setTimeout(() => {
-      eyeWhites.forEach((e) => e.setAttribute("ry", "16"));
-    }, 140);
+      eyeWhites.forEach((e) => e.setAttribute("ry", String(OPEN_RY)));
+    }, 130);
     const next = 2500 + Math.random() * 3500;
     setTimeout(blink, next);
   }
   setTimeout(blink, 2000);
 
-  // --- Eye tracking (subtle) ---
+  // --- Eye tracking (glint drifts with the mouse) ---
   window.addEventListener("mousemove", (e) => {
     const rect = svg.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) / window.innerWidth;   // -0.5..0.5
+    const dx = (e.clientX - cx) / window.innerWidth;
     const dy = (e.clientY - cy) / window.innerHeight;
     const mx = Math.max(-1, Math.min(1, dx * 2));
     const my = Math.max(-1, Math.min(1, dy * 2));
-    const offs = [
-      { base: [74, 104] },
-      { base: [130, 104] },
-    ];
+    const pupilBases = [[88, 118], [132, 118]];
+    const glintBases = [[90, 115.5], [134, 115.5]];
     eyes.forEach((p, i) => {
-      const [bx, by] = offs[i].base;
-      p.setAttribute("cx", bx + mx * 4);
-      p.setAttribute("cy", by + my * 3);
+      const [bx, by] = pupilBases[i];
+      p.setAttribute("cx", bx + mx * 1.6);
+      p.setAttribute("cy", by + my * 1.2);
     });
     glints.forEach((g, i) => {
-      const [bx, by] = offs[i].base;
-      g.setAttribute("cx", bx - 1 + mx * 4);
-      g.setAttribute("cy", by - 3 + my * 3);
+      const [bx, by] = glintBases[i];
+      g.setAttribute("cx", bx + mx * 1.6);
+      g.setAttribute("cy", by + my * 1.2);
     });
   });
 
-  // --- Talking class toggle (faster bob when speaking) ---
+  // --- Talking class toggle ---
   window.setAvatarTalking = function (on) {
     svg.classList.toggle("talking", !!on);
   };

@@ -14,3 +14,7 @@ assets/*.wav
 assets/*.png
 .idea/
 .vscode/
+
+# Loose Lottie source dropped at the repo root during dev — the served copy
+# lives at static/assets/avatar.json
+/Girl blinking eyes.json

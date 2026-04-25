@@ -2,81 +2,258 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sparks — Live Math Tutor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sparks — Live K12 Math Tutor</title>
 <link rel="stylesheet" href="/static/style.css" />
 <!-- KaTeX for math rendering -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<!-- function-plot (2D plots) — bundles d3 internally -->
+<script src="https://cdn.jsdelivr.net/npm/function-plot@1.25.1/dist/function-plot.js"></script>
+<!-- Rough.js for hand-drawn SVG -->
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
 </head>
 <body>
 
-<header id="topbar">
-  <div id="topic">Ready when you are.</div>
-  <div id="status">disconnected</div>
-</header>
+<div id="app">
 
-<main id="board"></main>
+  <!-- ═════════ HEADER ═════════ -->
+  <header id="topbar">
+    <div id="topic-area">
+      <div id="topic">Sparks</div>
+      <div id="sub-topic"><span id="grade"></span><span id="step"></span></div>
+    </div>
+    <div id="status-area">
+      <button id="langBtn" class="lang-btn" title="Toggle language">EN</button>
+      <div id="status">disconnected</div>
+    </div>
+  </header>
 
-<div id="hud">
-  <div class="hint"><kbd>SPACE</kbd> to talk · release to send</div>
-  <button id="pttBtn">Hold to Talk</button>
-</div>
+  <!-- ═════════ LEFT PANEL: problem + transcript ═════════ -->
+  <aside id="left-panel">
+    <section id="problem-panel">
+      <h3>Problem</h3>
+      <div id="problem-empty">Ask Sparks a math question to begin.</div>
+      <div id="problem-text" class="hidden"></div>
+      <div id="problem-latex" class="hidden"></div>
+    </section>
 
-<div id="avatar-wrap">
-  <div id="speech-bubble" class="hidden"></div>
-  <svg id="avatar" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="skin" cx="0.4" cy="0.35" r="0.8">
-        <stop offset="0%" stop-color="#ffe7c5"/>
-        <stop offset="100%" stop-color="#ffb970"/>
-      </radialGradient>
-      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="0.6"/>
-      </filter>
-    </defs>
+    <section id="transcript-panel">
+      <h3>Conversation</h3>
+      <div id="transcript" aria-live="polite"></div>
+    </section>
+  </aside>
 
-    <!-- antenna -->
-    <line x1="100" y1="20" x2="100" y2="2" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="100" cy="0" r="5" fill="#ff5470">
-      <animate attributeName="r" values="5;6;5" dur="1.6s" repeatCount="indefinite"/>
-    </circle>
+  <!-- ═════════ RIGHT PANEL: working board ═════════ -->
+  <main id="board" aria-label="Whiteboard"></main>
 
-    <!-- head -->
-    <ellipse id="head" cx="100" cy="110" rx="78" ry="85" fill="url(#skin)" stroke="#2a2a2a" stroke-width="3"/>
+  <!-- ═════════ FOOTER: input controls ═════════ -->
+  <footer id="hud">
+    <form id="text-form" autocomplete="off">
+      <input id="text-input" type="text"
+             placeholder="Type a question, or hold SPACE to talk…"
+             aria-label="Type a question" />
+      <button id="sendBtn" type="submit">Send</button>
+    </form>
+    <div id="ptt-area">
+      <span class="hint"><kbd>SPACE</kbd> hold to talk</span>
+      <button id="pttBtn">🎙 Hold</button>
+    </div>
+  </footer>
 
-    <!-- cheeks -->
-    <circle cx="45" cy="135" r="12" fill="#ff9ab0" opacity="0.55"/>
-    <circle cx="155" cy="135" r="12" fill="#ff9ab0" opacity="0.55"/>
+  <!-- ═════════ AVATAR — refined lady portrait ═════════ -->
+  <div id="avatar-wrap">
+    <svg id="avatar" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Skin: warm gradient with subtle inner highlight -->
+        <radialGradient id="skin" cx="0.42" cy="0.38" r="0.7">
+          <stop offset="0%"   stop-color="#fbd3b0"/>
+          <stop offset="65%"  stop-color="#edbf94"/>
+          <stop offset="100%" stop-color="#c79570"/>
+        </radialGradient>
+        <!-- Hair: two-tone for depth -->
+        <linearGradient id="hairBack" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stop-color="#3e2320"/>
+          <stop offset="100%" stop-color="#1f0f0d"/>
+        </linearGradient>
+        <linearGradient id="hairFront" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stop-color="#4a2c28"/>
+          <stop offset="100%" stop-color="#2a1613"/>
+        </linearGradient>
+        <!-- Face shade (subtle right-side shadow for dimension) -->
+        <linearGradient id="faceShade" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%"  stop-color="#000" stop-opacity="0"/>
+          <stop offset="70%" stop-color="#000" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0.12"/>
+        </linearGradient>
+        <!-- Lip gradient for depth -->
+        <linearGradient id="lipGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stop-color="#b85668"/>
+          <stop offset="55%" stop-color="#a33e50"/>
+          <stop offset="100%" stop-color="#8a2c3d"/>
+        </linearGradient>
+        <radialGradient id="lipShine" cx="0.5" cy="0.7" r="0.5">
+          <stop offset="0%"   stop-color="#ffc0cc" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#ffc0cc" stop-opacity="0"/>
+        </radialGradient>
+        <clipPath id="lipClip" clipPathUnits="userSpaceOnUse">
+          <path d="M -18 0
+                   Q -12 -6 -6 -3
+                   Q -2 -5 0 -3
+                   Q 2 -5 6 -3
+                   Q 12 -6 18 0
+                   Q 12 10 0 11
+                   Q -12 10 -18 0 Z"/>
+        </clipPath>
+        <!-- Mouth interior: warm rose fading to soft dark — reads as mouth, not a hole -->
+        <radialGradient id="mouthInterior" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%"   stop-color="#5c1420"/>
+          <stop offset="60%"  stop-color="#8a2c3d"/>
+          <stop offset="100%" stop-color="#a64156"/>
+        </radialGradient>
+      </defs>
 
-    <!-- eyes -->
-    <g id="eyes">
-      <g class="eye">
-        <ellipse class="eye-white" cx="72" cy="100" rx="14" ry="16" fill="white" stroke="#2a2a2a" stroke-width="2.5"/>
-        <circle class="pupil" cx="74" cy="104" r="6" fill="#1a1a1a"/>
-        <circle class="glint" cx="76" cy="101" r="2" fill="white"/>
+      <!-- Back hair — full-volume flowing shape past shoulders -->
+      <path d="M 110 38
+               C 76 40 50 58 42 98
+               C 34 140 32 190 38 240
+               L 58 258
+               Q 60 220 64 190
+               Q 68 155 78 132
+               L 142 132
+               Q 152 155 156 190
+               Q 160 220 162 258
+               L 182 240
+               C 188 190 186 140 178 98
+               C 170 58 144 40 110 40 Z"
+            fill="url(#hairBack)"/>
+
+      <!-- Black top (scoop-neck) — sits high so neck looks proportionate -->
+      <path d="M 38 260
+               Q 46 206 72 198
+               Q 92 212 110 212
+               Q 128 212 148 198
+               Q 174 206 182 260 Z"
+            fill="#141414"/>
+
+      <!-- Neck (short, natural taper) -->
+      <path d="M 96 168 L 96 198 Q 110 206 124 198 L 124 168 Z" fill="url(#skin)"/>
+      <!-- Neck shadow under chin -->
+      <path d="M 96 170 Q 110 178 124 170 L 122 176 Q 110 182 98 176 Z"
+            fill="#000" opacity="0.14"/>
+
+      <!-- Collarbone suggestion -->
+      <path d="M 86 212 Q 110 220 134 212"
+            stroke="#000" stroke-width="1" fill="none" opacity="0.15"/>
+
+      <!-- Face -->
+      <ellipse id="head" cx="110" cy="118" rx="42" ry="54" fill="url(#skin)"/>
+      <!-- Face shade -->
+      <ellipse cx="110" cy="118" rx="42" ry="54" fill="url(#faceShade)"/>
+
+      <!-- Jawline soft shadow -->
+      <path d="M 80 145 Q 110 172 140 145"
+            fill="none" stroke="#000" stroke-width="2" opacity="0.08"/>
+
+      <!-- Front hair (cap over forehead, slight side sweep) -->
+      <path d="M 70 90
+               Q 82 58 118 60
+               Q 148 66 152 102
+               Q 144 86 128 82
+               Q 112 78 96 84
+               Q 80 92 70 98 Z"
+            fill="url(#hairFront)"/>
+      <!-- Small highlight strand on the sweep -->
+      <path d="M 78 90 Q 96 72 130 70"
+            stroke="#6b3f38" stroke-width="1" fill="none" opacity="0.55"/>
+
+      <!-- Left side locks (small wisp near cheek) -->
+      <path d="M 68 102 Q 68 138 74 158 Q 70 140 72 104 Z"
+            fill="url(#hairFront)"/>
+
+      <!-- Ears (tiny, behind hair) -->
+      <ellipse cx="70" cy="128" rx="3" ry="6" fill="url(#skin)" opacity="0.9"/>
+      <ellipse cx="150" cy="128" rx="3" ry="6" fill="url(#skin)" opacity="0.9"/>
+
+      <!-- Cheek blush -->
+      <ellipse cx="82" cy="138" rx="10" ry="6" fill="#eb9a94" opacity="0.32"/>
+      <ellipse cx="138" cy="138" rx="10" ry="6" fill="#eb9a94" opacity="0.32"/>
+
+      <!-- Eyebrows — thin, naturally arched -->
+      <path d="M 78 102 Q 88 97 98 102"
+            stroke="#2b1816" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M 122 102 Q 132 97 142 102"
+            stroke="#2b1816" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+
+      <!-- Eyelash strokes above each eye (subtle) -->
+      <path d="M 78 114 L 76 111  M 84 113 L 82 110  M 92 112 L 94 109"
+            stroke="#2b1816" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 142 114 L 144 111  M 136 113 L 138 110  M 128 112 L 126 109"
+            stroke="#2b1816" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+      <!-- Eyes — almond dark ovals with white highlight; eye-white = outer shape for blink. -->
+      <g id="eyes">
+        <g class="eye">
+          <ellipse class="eye-white" cx="88" cy="118" rx="5.5" ry="7"
+                   fill="#2b1816"/>
+          <circle class="pupil" cx="88" cy="118" r="0.1" fill="#2b1816"/>
+          <circle class="glint" cx="90" cy="115.5" r="1.3" fill="#ffffff"/>
+          <circle cx="86" cy="120" r="0.7" fill="#ffffff" opacity="0.7"/>
+        </g>
+        <g class="eye">
+          <ellipse class="eye-white" cx="132" cy="118" rx="5.5" ry="7"
+                   fill="#2b1816"/>
+          <circle class="pupil" cx="132" cy="118" r="0.1" fill="#2b1816"/>
+          <circle class="glint" cx="134" cy="115.5" r="1.3" fill="#ffffff"/>
+          <circle cx="130" cy="120" r="0.7" fill="#ffffff" opacity="0.7"/>
+        </g>
       </g>
-      <g class="eye">
-        <ellipse class="eye-white" cx="128" cy="100" rx="14" ry="16" fill="white" stroke="#2a2a2a" stroke-width="2.5"/>
-        <circle class="pupil" cx="130" cy="104" r="6" fill="#1a1a1a"/>
-        <circle class="glint" cx="132" cy="101" r="2" fill="white"/>
+
+      <!-- Nose — gentle bridge shadow + nostril hint -->
+      <path d="M 108 128 Q 105 142 109 150 Q 113 151 115 149"
+            fill="none" stroke="#b7845c" stroke-width="1.1"
+            stroke-linecap="round" opacity="0.7"/>
+
+      <!-- MOUTH: fuller natural lips with cupid's-bow, lip-sync opening -->
+      <g id="mouth-group" transform="translate(110 160)">
+        <!-- Upper-lip shadow behind full lip -->
+        <path d="M -17 -1 Q -11 -7 -6 -4 Q -2 -6 0 -4 Q 2 -6 6 -4 Q 11 -7 17 -1"
+              stroke="#6d2132" stroke-width="0.8" fill="none"
+              stroke-linecap="round" opacity="0.5"/>
+        <!-- Full lip shape (bigger cupid's bow, rounded lower) -->
+        <path d="M -18 0
+                 Q -12 -6 -6 -3
+                 Q -2 -5 0 -3
+                 Q 2 -5 6 -3
+                 Q 12 -6 18 0
+                 Q 12 10 0 11
+                 Q -12 10 -18 0 Z"
+              fill="url(#lipGrad)"/>
+        <!-- Upper/lower lip seam (natural line between lips) -->
+        <path d="M -16 0 Q -10 -1 -3 -0.5 Q 0 -1 3 -0.5 Q 10 -1 16 0"
+              stroke="#5c1d2b" stroke-width="1" fill="none"
+              stroke-linecap="round" opacity="0.55"/>
+        <!-- Mouth interior — warm rose gradient, animated opening, clipped to lips -->
+        <ellipse id="mouth" cx="0" cy="2" rx="12" ry="0.7"
+                 fill="url(#mouthInterior)" clip-path="url(#lipClip)"/>
+        <!-- Upper teeth row — stays anchored to upper lip area so it's visible when mouth opens -->
+        <rect x="-10" y="-1" width="20" height="3.2" fill="#fff6e8" rx="1.2"
+              opacity="0.95" clip-path="url(#lipClip)"/>
+        <!-- Subtle gap lines between teeth -->
+        <line x1="-6" y1="-1" x2="-6" y2="2.2" stroke="#e6d6c0" stroke-width="0.3" opacity="0.6" clip-path="url(#lipClip)"/>
+        <line x1="0"  y1="-1" x2="0"  y2="2.2" stroke="#e6d6c0" stroke-width="0.3" opacity="0.6" clip-path="url(#lipClip)"/>
+        <line x1="6"  y1="-1" x2="6"  y2="2.2" stroke="#e6d6c0" stroke-width="0.3" opacity="0.6" clip-path="url(#lipClip)"/>
+        <!-- Tongue at the bottom of mouth opening, fades in when wide open -->
+        <path id="tongue" d="M-6 6 Q0 8 6 6 Q4 7 0 7.5 Q-4 7 -6 6 Z"
+              fill="#e06a82" opacity="0" clip-path="url(#lipClip)"/>
+        <!-- Lower-lip glossy highlight -->
+        <ellipse cx="0" cy="6.5" rx="8" ry="2.2" fill="url(#lipShine)"/>
       </g>
-    </g>
 
-    <!-- eyebrows -->
-    <path d="M55 78 Q72 70 89 78" stroke="#2a2a2a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-    <path d="M111 78 Q128 70 145 78" stroke="#2a2a2a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div id="avatar-label">Sparks</div>
+  </div>
 
-    <!-- mouth (scales with audio) -->
-    <g id="mouth-group" transform="translate(100 160)">
-      <ellipse id="mouth" cx="0" cy="0" rx="22" ry="6" fill="#3a1818" stroke="#2a2a2a" stroke-width="2.5"/>
-      <path id="tongue" d="M-10 2 Q0 10 10 2" fill="#ff7a8a" opacity="0.9"/>
-    </g>
-
-    <!-- floor shadow -->
-    <ellipse cx="100" cy="210" rx="55" ry="6" fill="#000" opacity="0.2"/>
-  </svg>
-
-  <div id="avatar-label">Sparks</div>
 </div>
 
 <script src="/static/avatar.js"></script>
