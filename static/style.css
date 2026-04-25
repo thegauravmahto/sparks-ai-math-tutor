@@ -263,13 +263,14 @@ h3 {
 #avatar-wrap {
   position: fixed;
   right: 24px; bottom: 96px;
-  width: 170px; height: 200px;
+  width: 180px; height: 180px;
   z-index: 6;
   pointer-events: none;
 }
-#avatar {
-  width: 100%; height: 100%;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.08));
+#avatar-body {
+  width: 100%; height: 100%; display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.12));
   transform-origin: 50% 100%;
   animation: idleBob 3s ease-in-out infinite;
 }
@@ -277,7 +278,16 @@ h3 {
   0%,100% { transform: translateY(0) rotate(-1deg); }
   50%     { transform: translateY(-3px) rotate(1deg); }
 }
-#avatar.talking { animation: idleBob 1.2s ease-in-out infinite; }
+#avatar-body.talking { animation: idleBob 1.2s ease-in-out infinite; }
+/* Owl mascot — full-frame SVG, gentle idle bob */
+#avatar {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18));
+  pointer-events: none;
+  animation: idleBob 3.2s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+#avatar.talking { animation: idleBob 1.4s ease-in-out infinite; }
 #avatar-label {
   position: absolute; bottom: -4px; left: 0; right: 0;
   text-align: center; font-size: 10px; color: #a1a1aa;

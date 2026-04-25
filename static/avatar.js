@@ -17,19 +17,20 @@
 
   function animateMouth() {
     currentAmp += (targetAmp - currentAmp) * 0.35;
-    // Lip-sync: grows inside full lip outline via clipPath so it never escapes.
-    const ry = 0.7 + currentAmp * 8;    // closed seam → open
-    const rx = 12  - currentAmp * 2.5;
+    // Owl: bigger mouth below the beak. Fades in + expands when talking.
+    const ry = 0.8 + currentAmp * 8;
+    const rx = 14  + currentAmp * 2;
+    const op = currentAmp < 0.05 ? 0 : Math.min(1, currentAmp * 4);
     mouth.setAttribute("ry", ry.toFixed(2));
     mouth.setAttribute("rx", rx.toFixed(2));
-    // Tongue peeks only when wide open
-    tongue.setAttribute("opacity", (currentAmp > 0.4 ? currentAmp * 0.8 : 0).toFixed(2));
+    mouth.setAttribute("opacity", op.toFixed(2));
+    tongue.setAttribute("opacity", (currentAmp > 0.4 ? currentAmp * 0.7 : 0).toFixed(2));
     requestAnimationFrame(animateMouth);
   }
   animateMouth();
 
-  // --- Blinking (eye squishes flat then restores to ry=7) ---
-  const OPEN_RY = 7;
+  // --- Blinking (eye squishes flat then restores to ry=17) ---
+  const OPEN_RY = 17;
   function blink() {
     eyeWhites.forEach((e) => e.setAttribute("ry", "0.6"));
     setTimeout(() => {
@@ -49,22 +50,25 @@
     const dy = (e.clientY - cy) / window.innerHeight;
     const mx = Math.max(-1, Math.min(1, dx * 2));
     const my = Math.max(-1, Math.min(1, dy * 2));
-    const pupilBases = [[88, 118], [132, 118]];
-    const glintBases = [[90, 115.5], [134, 115.5]];
+    // Owl: pupils drift inside the white glasses lenses
+    const pupilBases = [[80, 106], [140, 106]];
+    const glintBases = [[84, 100], [144, 100]];
     eyes.forEach((p, i) => {
       const [bx, by] = pupilBases[i];
-      p.setAttribute("cx", bx + mx * 1.6);
-      p.setAttribute("cy", by + my * 1.2);
+      p.setAttribute("cx", bx + mx * 5);
+      p.setAttribute("cy", by + my * 4);
     });
     glints.forEach((g, i) => {
       const [bx, by] = glintBases[i];
-      g.setAttribute("cx", bx + mx * 1.6);
-      g.setAttribute("cy", by + my * 1.2);
+      g.setAttribute("cx", bx + mx * 5);
+      g.setAttribute("cy", by + my * 4);
     });
   });
 
-  // --- Talking class toggle ---
+  // --- Talking class toggle (drives the idle bob speed on body + mouth) ---
+  const body = document.getElementById("avatar-body");
   window.setAvatarTalking = function (on) {
     svg.classList.toggle("talking", !!on);
+    if (body) body.classList.toggle("talking", !!on);
   };
 })();

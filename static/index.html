@@ -61,193 +61,101 @@
     </div>
   </footer>
 
-  <!-- ═════════ AVATAR — refined lady portrait ═════════ -->
+  <!-- ═════════ AVATAR — friendly tutor owl ═════════ -->
   <div id="avatar-wrap">
-    <svg id="avatar" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg">
+    <svg id="avatar" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- Skin: warm gradient with subtle inner highlight -->
-        <radialGradient id="skin" cx="0.42" cy="0.38" r="0.7">
-          <stop offset="0%"   stop-color="#fbd3b0"/>
-          <stop offset="65%"  stop-color="#edbf94"/>
-          <stop offset="100%" stop-color="#c79570"/>
+        <radialGradient id="owlBody" cx="0.5" cy="0.4" r="0.7">
+          <stop offset="0%"   stop-color="#b88350"/>
+          <stop offset="100%" stop-color="#5e3a1f"/>
         </radialGradient>
-        <!-- Hair: two-tone for depth -->
-        <linearGradient id="hairBack" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%"  stop-color="#3e2320"/>
-          <stop offset="100%" stop-color="#1f0f0d"/>
-        </linearGradient>
-        <linearGradient id="hairFront" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%"  stop-color="#4a2c28"/>
-          <stop offset="100%" stop-color="#2a1613"/>
-        </linearGradient>
-        <!-- Face shade (subtle right-side shadow for dimension) -->
-        <linearGradient id="faceShade" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%"  stop-color="#000" stop-opacity="0"/>
-          <stop offset="70%" stop-color="#000" stop-opacity="0"/>
-          <stop offset="100%" stop-color="#000" stop-opacity="0.12"/>
-        </linearGradient>
-        <!-- Lip gradient for depth -->
-        <linearGradient id="lipGrad" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%"  stop-color="#b85668"/>
-          <stop offset="55%" stop-color="#a33e50"/>
-          <stop offset="100%" stop-color="#8a2c3d"/>
-        </linearGradient>
-        <radialGradient id="lipShine" cx="0.5" cy="0.7" r="0.5">
-          <stop offset="0%"   stop-color="#ffc0cc" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="#ffc0cc" stop-opacity="0"/>
+        <radialGradient id="owlBelly" cx="0.5" cy="0.5" r="0.6">
+          <stop offset="0%"   stop-color="#fdf0d4"/>
+          <stop offset="100%" stop-color="#f0d4a3"/>
         </radialGradient>
-        <clipPath id="lipClip" clipPathUnits="userSpaceOnUse">
-          <path d="M -18 0
-                   Q -12 -6 -6 -3
-                   Q -2 -5 0 -3
-                   Q 2 -5 6 -3
-                   Q 12 -6 18 0
-                   Q 12 10 0 11
-                   Q -12 10 -18 0 Z"/>
-        </clipPath>
-        <!-- Mouth interior: warm rose fading to soft dark — reads as mouth, not a hole -->
+        <linearGradient id="beak" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#ffc14e"/>
+          <stop offset="100%" stop-color="#d77f1c"/>
+        </linearGradient>
         <radialGradient id="mouthInterior" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%"   stop-color="#5c1420"/>
-          <stop offset="60%"  stop-color="#8a2c3d"/>
-          <stop offset="100%" stop-color="#a64156"/>
+          <stop offset="0%"   stop-color="#3c100c"/>
+          <stop offset="60%"  stop-color="#6a2018"/>
+          <stop offset="100%" stop-color="#9a3128"/>
         </radialGradient>
       </defs>
 
-      <!-- Back hair — full-volume flowing shape past shoulders -->
-      <path d="M 110 38
-               C 76 40 50 58 42 98
-               C 34 140 32 190 38 240
-               L 58 258
-               Q 60 220 64 190
-               Q 68 155 78 132
-               L 142 132
-               Q 152 155 156 190
-               Q 160 220 162 258
-               L 182 240
-               C 188 190 186 140 178 98
-               C 170 58 144 40 110 40 Z"
-            fill="url(#hairBack)"/>
+      <!-- Floor shadow -->
+      <ellipse cx="110" cy="240" rx="65" ry="6" fill="#000" opacity="0.18"/>
 
-      <!-- Black top (scoop-neck) — sits high so neck looks proportionate -->
-      <path d="M 38 260
-               Q 46 206 72 198
-               Q 92 212 110 212
-               Q 128 212 148 198
-               Q 174 206 182 260 Z"
-            fill="#141414"/>
+      <!-- Feet -->
+      <ellipse cx="92"  cy="234" rx="13" ry="6" fill="url(#beak)" stroke="#a4660d" stroke-width="1"/>
+      <ellipse cx="128" cy="234" rx="13" ry="6" fill="url(#beak)" stroke="#a4660d" stroke-width="1"/>
+      <line x1="86"  y1="234" x2="84"  y2="240" stroke="#a4660d" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="92"  y1="234" x2="92"  y2="241" stroke="#a4660d" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="98"  y1="234" x2="100" y2="240" stroke="#a4660d" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="122" y1="234" x2="120" y2="240" stroke="#a4660d" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="128" y1="234" x2="128" y2="241" stroke="#a4660d" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="134" y1="234" x2="136" y2="240" stroke="#a4660d" stroke-width="1.5" stroke-linecap="round"/>
 
-      <!-- Neck (short, natural taper) -->
-      <path d="M 96 168 L 96 198 Q 110 206 124 198 L 124 168 Z" fill="url(#skin)"/>
-      <!-- Neck shadow under chin -->
-      <path d="M 96 170 Q 110 178 124 170 L 122 176 Q 110 182 98 176 Z"
-            fill="#000" opacity="0.14"/>
+      <!-- Body (round egg shape) -->
+      <ellipse cx="110" cy="130" rx="78" ry="98" fill="url(#owlBody)"/>
 
-      <!-- Collarbone suggestion -->
-      <path d="M 86 212 Q 110 220 134 212"
-            stroke="#000" stroke-width="1" fill="none" opacity="0.15"/>
+      <!-- Wings (subtle on sides) -->
+      <path d="M 38 130 Q 30 178 48 220 Q 56 195 50 145 Z"
+            fill="#5e3a1f" opacity="0.85"/>
+      <path d="M 182 130 Q 190 178 172 220 Q 164 195 170 145 Z"
+            fill="#5e3a1f" opacity="0.85"/>
 
-      <!-- Face -->
-      <ellipse id="head" cx="110" cy="118" rx="42" ry="54" fill="url(#skin)"/>
-      <!-- Face shade -->
-      <ellipse cx="110" cy="118" rx="42" ry="54" fill="url(#faceShade)"/>
+      <!-- Belly (lighter front oval) -->
+      <ellipse cx="110" cy="155" rx="50" ry="65" fill="url(#owlBelly)"/>
+      <!-- Belly feather hints -->
+      <path d="M 90 145 Q 110 152 130 145" stroke="#d4a87a" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M 86 175 Q 110 184 134 175" stroke="#d4a87a" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M 88 200 Q 110 208 132 200" stroke="#d4a87a" stroke-width="1" fill="none" opacity="0.5"/>
 
-      <!-- Jawline soft shadow -->
-      <path d="M 80 145 Q 110 172 140 145"
-            fill="none" stroke="#000" stroke-width="2" opacity="0.08"/>
+      <!-- Ear tufts (top of head) -->
+      <path d="M 70 56 Q 64 30 60 24 Q 78 28 82 50 Z" fill="url(#owlBody)"/>
+      <path d="M 150 56 Q 156 30 160 24 Q 142 28 138 50 Z" fill="url(#owlBody)"/>
 
-      <!-- Front hair (cap over forehead, slight side sweep) -->
-      <path d="M 70 90
-               Q 82 58 118 60
-               Q 148 66 152 102
-               Q 144 86 128 82
-               Q 112 78 96 84
-               Q 80 92 70 98 Z"
-            fill="url(#hairFront)"/>
-      <!-- Small highlight strand on the sweep -->
-      <path d="M 78 90 Q 96 72 130 70"
-            stroke="#6b3f38" stroke-width="1" fill="none" opacity="0.55"/>
+      <!-- Glasses (big round, classic tutor) -->
+      <circle cx="80"  cy="105" r="32" fill="#fcfaf5" stroke="#1a1a1a" stroke-width="3"/>
+      <circle cx="140" cy="105" r="32" fill="#fcfaf5" stroke="#1a1a1a" stroke-width="3"/>
+      <line x1="111" y1="105" x2="109" y2="105" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+      <line x1="109" y1="105" x2="111" y2="105" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 109 105 L 111 105"
+            stroke="#1a1a1a" stroke-width="3.5" stroke-linecap="round"/>
 
-      <!-- Left side locks (small wisp near cheek) -->
-      <path d="M 68 102 Q 68 138 74 158 Q 70 140 72 104 Z"
-            fill="url(#hairFront)"/>
-
-      <!-- Ears (tiny, behind hair) -->
-      <ellipse cx="70" cy="128" rx="3" ry="6" fill="url(#skin)" opacity="0.9"/>
-      <ellipse cx="150" cy="128" rx="3" ry="6" fill="url(#skin)" opacity="0.9"/>
-
-      <!-- Cheek blush -->
-      <ellipse cx="82" cy="138" rx="10" ry="6" fill="#eb9a94" opacity="0.32"/>
-      <ellipse cx="138" cy="138" rx="10" ry="6" fill="#eb9a94" opacity="0.32"/>
-
-      <!-- Eyebrows — thin, naturally arched -->
-      <path d="M 78 102 Q 88 97 98 102"
-            stroke="#2b1816" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <path d="M 122 102 Q 132 97 142 102"
-            stroke="#2b1816" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-
-      <!-- Eyelash strokes above each eye (subtle) -->
-      <path d="M 78 114 L 76 111  M 84 113 L 82 110  M 92 112 L 94 109"
-            stroke="#2b1816" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.85"/>
-      <path d="M 142 114 L 144 111  M 136 113 L 138 110  M 128 112 L 126 109"
-            stroke="#2b1816" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.85"/>
-
-      <!-- Eyes — almond dark ovals with white highlight; eye-white = outer shape for blink. -->
+      <!-- Eyes — bigger dark pupils inside the white glasses lenses -->
       <g id="eyes">
         <g class="eye">
-          <ellipse class="eye-white" cx="88" cy="118" rx="5.5" ry="7"
-                   fill="#2b1816"/>
-          <circle class="pupil" cx="88" cy="118" r="0.1" fill="#2b1816"/>
-          <circle class="glint" cx="90" cy="115.5" r="1.3" fill="#ffffff"/>
-          <circle cx="86" cy="120" r="0.7" fill="#ffffff" opacity="0.7"/>
+          <ellipse class="eye-white" cx="80" cy="106" rx="15" ry="17" fill="#0d0a08"/>
+          <circle class="pupil" cx="80" cy="106" r="0.1" fill="#0d0a08"/>
+          <circle class="glint" cx="85" cy="99" r="4" fill="#ffffff"/>
+          <circle cx="76" cy="113" r="1.8" fill="#ffffff" opacity="0.75"/>
         </g>
         <g class="eye">
-          <ellipse class="eye-white" cx="132" cy="118" rx="5.5" ry="7"
-                   fill="#2b1816"/>
-          <circle class="pupil" cx="132" cy="118" r="0.1" fill="#2b1816"/>
-          <circle class="glint" cx="134" cy="115.5" r="1.3" fill="#ffffff"/>
-          <circle cx="130" cy="120" r="0.7" fill="#ffffff" opacity="0.7"/>
+          <ellipse class="eye-white" cx="140" cy="106" rx="15" ry="17" fill="#0d0a08"/>
+          <circle class="pupil" cx="140" cy="106" r="0.1" fill="#0d0a08"/>
+          <circle class="glint" cx="145" cy="99" r="4" fill="#ffffff"/>
+          <circle cx="136" cy="113" r="1.8" fill="#ffffff" opacity="0.75"/>
         </g>
       </g>
 
-      <!-- Nose — gentle bridge shadow + nostril hint -->
-      <path d="M 108 128 Q 105 142 109 150 Q 113 151 115 149"
-            fill="none" stroke="#b7845c" stroke-width="1.1"
-            stroke-linecap="round" opacity="0.7"/>
+      <!-- Beak (orange triangle below the glasses) -->
+      <path d="M 110 138 L 100 152 Q 110 158 120 152 Z"
+            fill="url(#beak)" stroke="#a4660d" stroke-width="1.2"/>
 
-      <!-- MOUTH: fuller natural lips with cupid's-bow, lip-sync opening -->
-      <g id="mouth-group" transform="translate(110 160)">
-        <!-- Upper-lip shadow behind full lip -->
-        <path d="M -17 -1 Q -11 -7 -6 -4 Q -2 -6 0 -4 Q 2 -6 6 -4 Q 11 -7 17 -1"
-              stroke="#6d2132" stroke-width="0.8" fill="none"
-              stroke-linecap="round" opacity="0.5"/>
-        <!-- Full lip shape (bigger cupid's bow, rounded lower) -->
-        <path d="M -18 0
-                 Q -12 -6 -6 -3
-                 Q -2 -5 0 -3
-                 Q 2 -5 6 -3
-                 Q 12 -6 18 0
-                 Q 12 10 0 11
-                 Q -12 10 -18 0 Z"
-              fill="url(#lipGrad)"/>
-        <!-- Upper/lower lip seam (natural line between lips) -->
-        <path d="M -16 0 Q -10 -1 -3 -0.5 Q 0 -1 3 -0.5 Q 10 -1 16 0"
-              stroke="#5c1d2b" stroke-width="1" fill="none"
-              stroke-linecap="round" opacity="0.55"/>
-        <!-- Mouth interior — warm rose gradient, animated opening, clipped to lips -->
-        <ellipse id="mouth" cx="0" cy="2" rx="12" ry="0.7"
-                 fill="url(#mouthInterior)" clip-path="url(#lipClip)"/>
-        <!-- Upper teeth row — stays anchored to upper lip area so it's visible when mouth opens -->
-        <rect x="-10" y="-1" width="20" height="3.2" fill="#fff6e8" rx="1.2"
-              opacity="0.95" clip-path="url(#lipClip)"/>
-        <!-- Subtle gap lines between teeth -->
-        <line x1="-6" y1="-1" x2="-6" y2="2.2" stroke="#e6d6c0" stroke-width="0.3" opacity="0.6" clip-path="url(#lipClip)"/>
-        <line x1="0"  y1="-1" x2="0"  y2="2.2" stroke="#e6d6c0" stroke-width="0.3" opacity="0.6" clip-path="url(#lipClip)"/>
-        <line x1="6"  y1="-1" x2="6"  y2="2.2" stroke="#e6d6c0" stroke-width="0.3" opacity="0.6" clip-path="url(#lipClip)"/>
-        <!-- Tongue at the bottom of mouth opening, fades in when wide open -->
-        <path id="tongue" d="M-6 6 Q0 8 6 6 Q4 7 0 7.5 Q-4 7 -6 6 Z"
-              fill="#e06a82" opacity="0" clip-path="url(#lipClip)"/>
-        <!-- Lower-lip glossy highlight -->
-        <ellipse cx="0" cy="6.5" rx="8" ry="2.2" fill="url(#lipShine)"/>
+      <!-- Mouth: bigger, opens when talking (just below the beak) -->
+      <g id="mouth-group" transform="translate(110 172)">
+        <!-- Static smile (bolder) -->
+        <path d="M -14 -2 Q 0 8 14 -2"
+              stroke="#5e3a1f" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.85"/>
+        <!-- Animated dark mouth opening -->
+        <ellipse id="mouth" cx="0" cy="2" rx="14" ry="0.8"
+                 fill="url(#mouthInterior)" opacity="0"/>
+        <!-- Tongue peek at high amplitude -->
+        <path id="tongue" d="M-6 5 Q0 8 6 5 Q3 6 0 6.5 Q-3 6 -6 5 Z"
+              fill="#e573a8" opacity="0"/>
       </g>
 
     </svg>
