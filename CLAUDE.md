@@ -98,7 +98,12 @@ the tool. If you forget step 2 the model rarely picks the right tool.
 
 ## Avatar
 
-`static/index.html` contains a flat-illustration SVG portrait. `avatar.js`
+`static/index.html` contains a hand-crafted SVG **owl** avatar — body
+ellipse (`url(#owlBody)` gradient), lighter belly (`url(#owlBelly)`),
+beak and talon feet (`url(#beak)`), ear tufts, and **large round
+black-framed glasses** (the two `r="32"` circles around the eyes at
+cx=80 and cx=140). It is NOT a human portrait — earlier docs said
+"flat-illustration lady" and that is wrong; the code is an owl. `avatar.js`
 exposes two globals consumed by `app.js`:
 
 - `setMouthAmplitude(0..1)` — drives mouth `ry` (clip-path bounds it to the
@@ -109,10 +114,11 @@ Eye-tracking and blink hooks rely on these specific element IDs/classes:
 `#mouth`, `#tongue`, `#eyes .pupil`, `#eyes .glint`, `#eyes .eye-white`. If
 you redesign the avatar, **keep these IDs/classes** or rewrite avatar.js too.
 
-The user has rejected several avatar styles (saree teacher, kawaii mascot,
-default Lottie girl, even one minimal version). The current preference seems
-to be "polished SVG flat illustration" but be ready to iterate. For real
-**viseme** lip-sync we need Ready Player Me + TalkingHead.js (or Rive). The
+The user has rejected several avatar styles in the past (saree teacher,
+kawaii mascot, default Lottie girl, even one minimal version). The current
+shipped avatar is the bespectacled owl described above — be ready to iterate
+but assume the owl is intentional, not a placeholder. For real **viseme**
+lip-sync we need Ready Player Me + TalkingHead.js (or Rive). The
 amplitude-only mouth is a placeholder and the user knows it.
 
 ## Layout (CSS grid)
