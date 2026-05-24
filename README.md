@@ -36,7 +36,7 @@
 ## 🎬 Demo
 
 <p align="center">
-  <video src="https://github.com/thegauravmahto/livetutor/raw/feat/readme-revamp/static/assets/demo.mp4" controls width="100%" title="45-second Sparks demo — complex numbers lesson"></video>
+  <video src="https://github.com/thegauravmahto/sparks-ai-math-tutor/raw/feat/readme-revamp/static/assets/demo.mp4" controls width="100%" title="45-second Sparks demo — complex numbers lesson"></video>
 </p>
 
 | | |
@@ -76,8 +76,8 @@ Under the hood, Sparks uses no separate speech-to-text or text-to-speech layer. 
 Get running in under a minute:
 
 ```bash
-git clone https://github.com/thegauravmahto/livetutor.git
-cd livetutor
+git clone https://github.com/thegauravmahto/sparks-ai-math-tutor.git
+cd sparks-ai-math-tutor
 pip install -r requirements.txt
 cp .env.example .env           # paste your GEMINI_API_KEY into .env
 python server.py               # serves http://127.0.0.1:8765
