@@ -29,11 +29,12 @@
       try { return JSON.stringify(a); } catch { return String(a); }
     }).join(" ");
   }
+  const _pendingRelay = []; // messages logged before the WS opens
   function _relay(level, args) {
+    const payload = JSON.stringify({ type: "client_log", level, msg: _fmt(args).slice(0, 1500) });
     try {
-      if (ws && ws.readyState === 1 /* OPEN */) {
-        ws.send(JSON.stringify({ type: "client_log", level, msg: _fmt(args).slice(0, 1500) }));
-      }
+      if (ws && ws.readyState === 1 /* OPEN */) ws.send(payload);
+      else _pendingRelay.push(payload);
     } catch {}
   }
   const logInfo  = (...a) => { console.log  ("%c[livetutor]", LOG_STYLE, ...a); _relay("info",  a); };
@@ -42,6 +43,7 @@
   window.livetutor = {
     cardMap,
     dumpCards: () => [...cardMap.entries()].map(([k, v]) => ({ label: k, class: v.className })),
+    logInfo, logWarn, logError, // for avatar.js, which loads before this file
   };
 
   // ---------- Status ----------
@@ -56,7 +58,11 @@
   ws = new WebSocket(wsURL);
   ws.binaryType = "arraybuffer";
 
-  ws.addEventListener("open",  () => { logInfo("ws open"); setStatus("connected", "live"); });
+  ws.addEventListener("open",  () => {
+    _pendingRelay.splice(0).forEach((p) => { try { ws.send(p); } catch {} });
+    if (pendingStudentInfo) { sendJSON(pendingStudentInfo); pendingStudentInfo = null; }
+    logInfo("ws open"); setStatus("connected", "live");
+  });
   ws.addEventListener("close", (e) => { logInfo("ws close", e.code, e.reason); setStatus("disconnected", "error"); });
   ws.addEventListener("error", (e) => { logError("ws error", e); setStatus("socket error", "error"); });
   ws.addEventListener("message", (ev) => {
@@ -158,6 +164,8 @@
         case "set_step":          setStep(args); break;
         case "focus":             focusLabel(args.label); break;
         case "set_language":      setLanguage(args.language); break;
+        case "emote":             setAvatarEmotion(args.expression); break;
+        case "show_quiz":         showQuiz(args); break;
         default: logWarn("unknown tool:", name, args);
       }
       sendJSON({ type: "tool_result", id, ok: true });
@@ -803,6 +811,47 @@
     appendCard(card);
   }
 
+  // ---------- Interactive quiz ----------
+  function showQuiz(args) {
+    const { question, options = [], correct_index, label } = args;
+    if (!question || !options.length) { logWarn("show_quiz: bad args", args); return; }
+    const card = document.createElement("div");
+    card.className = "quiz-card";
+    const q = document.createElement("div");
+    q.className = "quiz-question";
+    q.textContent = question;
+    card.appendChild(q);
+    const wrap = document.createElement("div");
+    wrap.className = "quiz-options";
+    let answered = false;
+    options.forEach((opt, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-option";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        if (answered) return;
+        answered = true;
+        const correct = i === correct_index;
+        btn.classList.add(correct ? "correct" : "wrong");
+        const right = wrap.children[correct_index];
+        if (right) right.classList.add("correct"); // always reveal the answer
+        card.classList.add("answered");
+        setAvatarEmotion(correct ? "celebrating" : "encouraging");
+        sendJSON({
+          type: "quiz_answer",
+          label, question,
+          selected_index: i, selected_text: opt, correct,
+        });
+        setStatus("thinking…", "live");
+      });
+      wrap.appendChild(btn);
+    });
+    card.appendChild(wrap);
+    registerCard(label, card);
+    appendCard(card);
+  }
+
   // ---------- Highlight / clear ----------
   function highlightLabel(label) {
     const node = cardMap.get(label);
@@ -853,12 +902,26 @@
     setAvatarTalking(true);
 
     const timeData = new Uint8Array(analyser.fftSize);
+    const freqData = new Uint8Array(analyser.frequencyBinCount);
+    // Bin width = Nyquist / bins = 12000 / 256 ≈ 47 Hz.
+    const bandAvg = (lo, hi) => {
+      let s = 0;
+      for (let i = lo; i <= hi; i++) s += freqData[i];
+      return s / (hi - lo + 1);
+    };
     function tick() {
       if (ctx.currentTime < startAt) { requestAnimationFrame(tick); return; }
       analyser.getByteTimeDomainData(timeData);
       let sum = 0;
       for (let i = 0; i < timeData.length; i++) { const v = (timeData[i] - 128) / 128; sum += v * v; }
-      setMouthAmplitude(Math.min(1, Math.sqrt(sum / timeData.length) * 4));
+      const amp = Math.min(1, Math.sqrt(sum / timeData.length) * 4);
+      // Vowel-ish mouth shape: energy concentrated low (≤750 Hz) reads as a
+      // rounded "oo"; strong upper-formant energy (~1.5–4 kHz) reads as a
+      // wide "ee". Neutral when balanced.
+      analyser.getByteFrequencyData(freqData);
+      const low  = bandAvg(2, 16);   // ~94–750 Hz
+      const high = bandAvg(32, 85);  // ~1.5–4 kHz
+      setMouthShape(amp, (high - low) / (high + low + 1));
       if (ctx.currentTime < startAt + buf.duration) requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
@@ -944,6 +1007,60 @@
   });
 
   // ==============================================================
+  //   Photo input (homework problem → Gemini)
+  // ==============================================================
+  const photoBtn = document.getElementById("photoBtn");
+  const photoInput = document.getElementById("photo-input");
+
+  photoBtn.addEventListener("click", () => photoInput.click());
+  photoInput.addEventListener("change", async () => {
+    const file = photoInput.files && photoInput.files[0];
+    photoInput.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    try {
+      const dataUrl = await downscaleImage(file, 1280, 0.85);
+      addImageBubble(dataUrl);
+      sendJSON({ type: "image", mime: "image/jpeg", data: dataUrl.split(",")[1] });
+      logInfo("photo sent", file.name, `${Math.round(dataUrl.length * 0.75 / 1024)}KB`);
+      setStatus("reading photo…", "live");
+    } catch (e) {
+      logError("photo error", e);
+      setStatus("photo error", "error");
+    }
+  });
+
+  // Re-encode client-side: big phone photos become a ~1280px JPEG.
+  function downscaleImage(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(img.src);
+        resolve(c.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error("not an image")); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  function addImageBubble(dataUrl) {
+    const bubble = createBubble("user");
+    bubble.classList.remove("partial");
+    const img = document.createElement("img");
+    img.src = dataUrl;
+    img.className = "photo";
+    img.alt = "Photo of a math problem";
+    bubble.querySelector(".text").appendChild(img);
+    openBubble.user = null;
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  }
+
+  // ==============================================================
   //   Language toggle (just cycles label; model reads the sync call)
   // ==============================================================
   langBtn.addEventListener("click", () => {
@@ -954,6 +1071,38 @@
       ? "Please switch to Hindi from now on."
       : "Please switch to English from now on.";
     sendJSON({ type: "text", text: nudge });
+  });
+
+  // ==============================================================
+  //   Welcome / onboarding (name + class form shown before the main UI)
+  // ==============================================================
+  const welcomeForm = document.getElementById("welcome-form");
+  const studentNameInput = document.getElementById("student-name");
+  const studentClassSel = document.getElementById("student-class");
+  let pendingStudentInfo = null; // set if the form is submitted before ws opens
+
+  try {
+    const saved = JSON.parse(localStorage.getItem("livetutor_student") || "null");
+    if (saved && saved.name) {
+      studentNameInput.value = saved.name;
+      if (saved.class) studentClassSel.value = saved.class;
+    }
+  } catch {}
+
+  welcomeForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = studentNameInput.value.trim();
+    const klass = studentClassSel.value;
+    if (!name) return;
+    try { localStorage.setItem("livetutor_student", JSON.stringify({ name, class: klass })); } catch {}
+    gradeEl.textContent = klass;
+    logInfo("onboarding done:", name, klass);
+    const info = { type: "student_info", name, class: klass };
+    if (ws.readyState === WebSocket.OPEN) sendJSON(info);
+    else pendingStudentInfo = info;
+    ensureOutCtx(); // the submit click doubles as the audio-unlock gesture
+    document.body.classList.remove("onboarding"); // overlay fades, avatar glides to corner
+    setStatus("thinking…", "live");
   });
 
   // First click unlocks audio output context on strict browsers.

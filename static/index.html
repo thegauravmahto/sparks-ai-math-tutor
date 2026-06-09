@@ -13,7 +13,28 @@
 <!-- Rough.js for hand-drawn SVG -->
 <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
 </head>
-<body>
+<body class="onboarding">
+
+<!-- ═════════ WELCOME OVERLAY — avatar + name/class form, shown first ═════════ -->
+<div id="welcome">
+  <div id="welcome-card">
+    <h1>Hi! I'm Sparks</h1>
+    <p>Your voice math tutor. Tell me a little about yourself and let's get started.</p>
+    <form id="welcome-form" autocomplete="off">
+      <label for="student-name">Your name</label>
+      <input id="student-name" type="text" placeholder="e.g. Priya" maxlength="40" required />
+      <label for="student-class">Class</label>
+      <select id="student-class">
+        <option>Class 6</option>
+        <option>Class 7</option>
+        <option selected>Class 8</option>
+        <option>Class 9</option>
+        <option>Class 10</option>
+      </select>
+      <button type="submit">Start learning →</button>
+    </form>
+  </div>
+</div>
 
 <div id="app">
 
@@ -53,6 +74,9 @@
       <input id="text-input" type="text"
              placeholder="Type a question, or hold SPACE to talk…"
              aria-label="Type a question" />
+      <button id="photoBtn" type="button" title="Send a photo of a math problem"
+              aria-label="Send a photo of a math problem">📷</button>
+      <input id="photo-input" type="file" accept="image/*" capture="environment" hidden />
       <button id="sendBtn" type="submit">Send</button>
     </form>
     <div id="ptt-area">
@@ -101,9 +125,9 @@
       <ellipse cx="110" cy="130" rx="78" ry="98" fill="url(#owlBody)"/>
 
       <!-- Wings (subtle on sides) -->
-      <path d="M 38 130 Q 30 178 48 220 Q 56 195 50 145 Z"
+      <path class="wing wing-l" d="M 38 130 Q 30 178 48 220 Q 56 195 50 145 Z"
             fill="#5e3a1f" opacity="0.85"/>
-      <path d="M 182 130 Q 190 178 172 220 Q 164 195 170 145 Z"
+      <path class="wing wing-r" d="M 182 130 Q 190 178 172 220 Q 164 195 170 145 Z"
             fill="#5e3a1f" opacity="0.85"/>
 
       <!-- Belly (lighter front oval) -->
@@ -114,8 +138,8 @@
       <path d="M 88 200 Q 110 208 132 200" stroke="#d4a87a" stroke-width="1" fill="none" opacity="0.5"/>
 
       <!-- Ear tufts (top of head) -->
-      <path d="M 70 56 Q 64 30 60 24 Q 78 28 82 50 Z" fill="url(#owlBody)"/>
-      <path d="M 150 56 Q 156 30 160 24 Q 142 28 138 50 Z" fill="url(#owlBody)"/>
+      <path class="ear" d="M 70 56 Q 64 30 60 24 Q 78 28 82 50 Z" fill="url(#owlBody)"/>
+      <path class="ear" d="M 150 56 Q 156 30 160 24 Q 142 28 138 50 Z" fill="url(#owlBody)"/>
 
       <!-- Glasses (big round, classic tutor) -->
       <circle cx="80"  cy="105" r="32" fill="#fcfaf5" stroke="#1a1a1a" stroke-width="3"/>

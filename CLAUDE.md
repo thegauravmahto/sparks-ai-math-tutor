@@ -41,7 +41,7 @@ ask them to run the action again and read the relayed log yourself.
 
 Browser → Server
 - **binary** = 16 kHz mono Int16 PCM mic chunks (40 ms each).
-- **text JSON** = `{type:"ptt_start"|"ptt_end"|"text"|"tool_result"|"client_log", …}`.
+- **text JSON** = `{type:"ptt_start"|"ptt_end"|"text"|"tool_result"|"client_log"|"student_info"|"quiz_answer"|"image", …}`.
 
 Server → Browser
 - **binary** = 24 kHz mono Int16 PCM Gemini audio.
@@ -104,22 +104,38 @@ beak and talon feet (`url(#beak)`), ear tufts, and **large round
 black-framed glasses** (the two `r="32"` circles around the eyes at
 cx=80 and cx=140). It is NOT a human portrait — earlier docs said
 "flat-illustration lady" and that is wrong; the code is an owl. `avatar.js`
-exposes two globals consumed by `app.js`:
+exposes these globals consumed by `app.js`:
 
-- `setMouthAmplitude(0..1)` — drives mouth `ry` (clip-path bounds it to the
-  lip outline). Computed from `AnalyserNode` RMS in `app.js → enqueuePCM`.
-- `setAvatarTalking(bool)` — toggles a CSS class for slightly faster idle bob.
+- `setMouthShape(amp 0..1, shape -1..1)` — `amp` drives mouth openness (`ry`),
+  `shape` is a vowel hint (-1 rounded "oo", 0 neutral "ah", +1 wide "ee").
+  Computed in `app.js → enqueuePCM` from `AnalyserNode` RMS (amp) plus
+  low-vs-high frequency band balance (shape).
+- `setMouthAmplitude(0..1)` — back-compat wrapper; calls `setMouthShape(amp, 0)`.
+- `setAvatarTalking(bool)` — toggles a CSS class for slightly faster idle bob;
+  also clears a pending "thinking" emote when speech starts.
+- `setAvatarEmotion(expression)` — drives the `emote` tool. One of `happy`,
+  `thinking`, `encouraging`, `surprised`, `celebrating`. Toggles an
+  `emote-<name>` class on `#avatar` (animations live in `style.css`);
+  auto-clears after ~3 s (6 s for thinking).
 
-Eye-tracking and blink hooks rely on these specific element IDs/classes:
-`#mouth`, `#tongue`, `#eyes .pupil`, `#eyes .glint`, `#eyes .eye-white`. If
-you redesign the avatar, **keep these IDs/classes** or rewrite avatar.js too.
+Eye-tracking, blink, and emote hooks rely on these specific element
+IDs/classes: `#mouth`, `#tongue`, `#eyes .pupil`, `#eyes .glint`,
+`#eyes .eye-white`, `.ear`, `.wing` / `.wing-l` / `.wing-r`. If you redesign
+the avatar, **keep these IDs/classes** or rewrite avatar.js too.
 
 The user has rejected several avatar styles in the past (saree teacher,
 kawaii mascot, default Lottie girl, even one minimal version). The current
 shipped avatar is the bespectacled owl described above — be ready to iterate
-but assume the owl is intentional, not a placeholder. For real **viseme**
-lip-sync we need Ready Player Me + TalkingHead.js (or Rive). The
-amplitude-only mouth is a placeholder and the user knows it.
+but assume the owl is intentional, not a placeholder.
+
+**Live2D prototype**: `avatar.js` has a second backend behind the same
+globals, enabled with `?avatar=live2d` in the URL. It dynamically loads the
+Cubism 4 core + PixiJS 6 + pixi-live2d-display from CDN and renders the Haru
+sample model (loaded from CDN at runtime). `setMouthShape` maps onto
+`ParamMouthOpenY`/`ParamMouthForm`; `emote` maps onto the model's
+`.exp3.json` expressions by index. **Do NOT commit any Live2D model files or
+the Cubism core to the repo** — the sample models are under the Live2D Free
+Material License, not MIT. On any load failure it falls back to the owl.
 
 ## Layout (CSS grid)
 
@@ -188,7 +204,10 @@ Don't guess. Either:
 - 3-zone CSS-grid layout with sticky problem + scrolling transcript.
 - Manual-VAD push-to-talk + text-input lane + EN/Hindi language toggle.
 - Live transcripts (input + output audio transcription).
-- 12 whiteboard tools, including 4 K-12 templates with Rough.js rendering.
+- 18 tools, including 5 K-12 diagram templates with Rough.js rendering, an
+  `emote` tool for avatar reactions, and a clickable `show_quiz` MCQ tool.
+- Onboarding (name/class form → personalized voice greeting) and homework
+  photo input (`image` message → `send_client_content` with an inline-data part).
 - Browser-console relay over WebSocket.
 - Inline-SVG architecture diagram at `/architecture`.
 - shadcn-style white theme.

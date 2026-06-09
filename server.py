@@ -17,8 +17,10 @@ Protocol between browser and this server:
               { "type": "turn_complete" }
 """
 import os
+import re
 import sys
 import json
+import base64
 import asyncio
 import logging
 import traceback
@@ -54,6 +56,10 @@ Audience context:
   switch with them — mix Hindi and English naturally ("Chalo, ek example dekhte hain...").
 - Use rupees (₹), kilometres, lakhs, local names (Ravi, Priya, Anjali) in word problems.
 - Follow the Indian classroom structure: **Given → To Find → Solution → Answer**.
+- At the start of a session you may receive a "[Student profile]" message with the
+  student's name and class. Greet them warmly by name, calibrate every explanation
+  to that class level, and use their name naturally now and then. NEVER read the
+  profile message aloud or mention that you received it.
 
 Style:
 - Speak conversationally, as if you're sitting beside the student.
@@ -76,6 +82,27 @@ Layout tools (use these FIRST at the start of every problem):
 
   set_language(language)
     "en" or "hi". Defaults to "en". Switch when the student switches.
+
+  emote(expression)
+    Show an emotion on the Sparks owl avatar. One of: "happy", "thinking",
+    "encouraging", "surprised", "celebrating". React to the student —
+    celebrating when they solve something, encouraging after a mistake,
+    thinking while you work through a step. Use it at natural moments,
+    not every turn.
+
+Interactive tools:
+
+  show_quiz(question, options, correct_index, label)
+    Pose a multiple-choice question the student answers by CLICKING an option.
+    You'll receive a "[Quiz result]" message with what they picked. Use it to
+    check understanding after each concept — one quiz at a time, 2-4 options.
+    On a correct answer celebrate (emote "celebrating"); on a wrong answer
+    encourage, explain the right option, then re-check with a fresh quiz later.
+
+Photos: the student can send a PHOTO of a textbook or notebook problem. When an
+image arrives, read the problem from it, call set_problem with the question text
+(so it's pinned on screen), then teach it step by step as usual. If the image is
+unreadable, say so and ask them to retake it closer.
 
 Whiteboard tools (USE DIAGRAMS — students learn best when they see, not just hear):
 
@@ -490,6 +517,49 @@ TOOLS = [{
                 "required": ["language"],
             },
         },
+        {
+            "name": "show_quiz",
+            "description": (
+                "Show an interactive multiple-choice question on the whiteboard. "
+                "The student clicks an option and you receive a [Quiz result] "
+                "message with their answer. Use to check understanding."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string", "description": "The question, plain text."},
+                    "options": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "2-4 answer choices, plain text.",
+                    },
+                    "correct_index": {
+                        "type": "integer",
+                        "description": "0-based index of the correct option.",
+                    },
+                    "label": {"type": "string", "description": "Short identifier, e.g. 'quiz1'."},
+                },
+                "required": ["question", "options", "correct_index", "label"],
+            },
+        },
+        {
+            "name": "emote",
+            "description": (
+                "Show an emotion on the Sparks owl avatar. Use to react to the "
+                "student: celebrating when they solve something, encouraging after "
+                "a mistake, thinking while working through a step."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "happy | thinking | encouraging | surprised | celebrating",
+                    },
+                },
+                "required": ["expression"],
+            },
+        },
     ]
 }]
 
@@ -541,6 +611,10 @@ async def ws_endpoint(ws: WebSocket):
 
     # Counters so we don't log every single audio chunk (there are hundreds/sec).
     stats = {"mic_chunks": 0, "mic_bytes": 0, "gemini_audio_chunks": 0, "gemini_audio_bytes": 0}
+    # When replying to an injected text turn the model sometimes prefixes its
+    # output transcription with a literal "text:" — strip it from the first
+    # transcript chunk of each turn.
+    turn_state = {"first_out_chunk": True}
 
     try:
         log.info("connecting to Gemini Live: model=%s", LIVE_MODEL)
@@ -595,6 +669,91 @@ async def ws_endpoint(ws: WebSocket):
                             elif t == "tool_result":
                                 log.info("browser ack tool id=%s ok=%s",
                                          data.get("id"), data.get("ok"))
+                            elif t == "quiz_answer":
+                                # Student clicked a quiz option; relay to the model.
+                                label = str(data.get("label") or "")[:40]
+                                sel = str(data.get("selected_text") or "")[:200]
+                                ok = bool(data.get("correct"))
+                                log.info("quiz_answer label=%s correct=%s sel=%r", label, ok, sel)
+                                verdict = "CORRECT" if ok else "INCORRECT"
+                                followup = (
+                                    "Celebrate briefly and continue the lesson."
+                                    if ok else
+                                    "Encourage them, explain why the right option is right, "
+                                    "then continue."
+                                )
+                                quiz_text = (
+                                    f"[Quiz result] For quiz '{label}', the student clicked "
+                                    f"\"{sel}\" — {verdict}. {followup}"
+                                )
+                                try:
+                                    await session.send_client_content(
+                                        turns=types.Content(
+                                            role="user",
+                                            parts=[types.Part(text=quiz_text)],
+                                        ),
+                                        turn_complete=True,
+                                    )
+                                except Exception:
+                                    log.exception("quiz_answer send failed")
+                            elif t == "image":
+                                # Photo of a textbook/notebook problem from the browser.
+                                mime = str(data.get("mime") or "image/jpeg")[:40]
+                                try:
+                                    img_bytes = base64.b64decode(data.get("data") or "")
+                                except Exception:
+                                    log.warning("image: bad base64 payload")
+                                    continue
+                                if not img_bytes or len(img_bytes) > 4_000_000:
+                                    log.warning("image rejected size=%d", len(img_bytes))
+                                    await ws.send_json({"type": "status",
+                                                        "text": "Photo too large — try again"})
+                                    continue
+                                log.info("browser→gemini image: %d bytes mime=%s",
+                                         len(img_bytes), mime)
+                                try:
+                                    await session.send_client_content(
+                                        turns=types.Content(
+                                            role="user",
+                                            parts=[
+                                                types.Part(inline_data=types.Blob(
+                                                    data=img_bytes, mime_type=mime)),
+                                                types.Part(text=(
+                                                    "Here is a photo of a math problem from my "
+                                                    "textbook/notebook. Read the problem, pin it "
+                                                    "with set_problem, and help me solve it step "
+                                                    "by step."
+                                                )),
+                                            ],
+                                        ),
+                                        turn_complete=True,
+                                    )
+                                except Exception:
+                                    log.exception("image send failed")
+                            elif t == "student_info":
+                                # Onboarding form: name + class. Prime the model and
+                                # have it greet the student by name.
+                                name = str(data.get("name") or "").strip()[:60]
+                                klass = str(data.get("class") or "").strip()[:30]
+                                if name:
+                                    log.info("student_info: name=%r class=%r", name, klass)
+                                    grade = klass or "their class"
+                                    intro = (
+                                        f"[Student profile] Name: {name}. Class: {grade}. "
+                                        f"Greet {name} warmly by name (1-2 short sentences) "
+                                        f"and ask what math topic they'd like to work on today. "
+                                        f"Calibrate everything to {grade} level."
+                                    )
+                                    try:
+                                        await session.send_client_content(
+                                            turns=types.Content(
+                                                role="user",
+                                                parts=[types.Part(text=intro)],
+                                            ),
+                                            turn_complete=True,
+                                        )
+                                    except Exception:
+                                        log.exception("student_info send failed")
                             elif t == "client_log":
                                 level = (data.get("level") or "info").lower()
                                 msg   = data.get("msg") or ""
@@ -657,6 +816,7 @@ async def ws_endpoint(ws: WebSocket):
                             if sc:
                                 if getattr(sc, "interrupted", False):
                                     log.info("gemini interrupt")
+                                    turn_state["first_out_chunk"] = True
                                     await ws.send_json({"type": "interrupt"})
 
                                 # Input transcription (student's STT)
@@ -676,6 +836,9 @@ async def ws_endpoint(ws: WebSocket):
                                 ot = getattr(sc, "output_transcription", None)
                                 if ot is not None:
                                     txt = getattr(ot, "text", None) or ""
+                                    if txt and turn_state["first_out_chunk"]:
+                                        txt = re.sub(r"^\s*text\s*:\s*", "", txt)
+                                        turn_state["first_out_chunk"] = False
                                     if txt:
                                         log.debug("tts sparks: %r", txt[:120])
                                         await ws.send_json({
@@ -712,6 +875,7 @@ async def ws_endpoint(ws: WebSocket):
                                              stats["gemini_audio_bytes"])
                                     stats["gemini_audio_chunks"] = 0
                                     stats["gemini_audio_bytes"] = 0
+                                    turn_state["first_out_chunk"] = True
                                     await ws.send_json({"type": "turn_complete"})
                 except Exception:
                     log.exception("gemini pump crashed")

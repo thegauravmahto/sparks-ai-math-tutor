@@ -58,13 +58,16 @@ Under the hood, Sparks uses no separate speech-to-text or text-to-speech layer. 
 
 ## 🚀 Features
 
+- 👋 **Personalized onboarding** — the avatar greets you on a welcome screen; enter your name and class and Sparks says hello by name, calibrated to your NCERT class level.
+- ✅ **Click-to-answer quizzes** — Sparks poses multiple-choice questions on the whiteboard (`show_quiz`); click an option and she reacts to your answer, celebrating or re-explaining.
+- 📷 **Homework photo input** — snap a picture of a textbook problem; Sparks reads it, pins it as the problem, and teaches it step by step.
 - 🎙️ **Native voice in / out** — 16 kHz Int16 PCM mic input, 24 kHz Int16 PCM Gemini audio output. No WebRTC, no third-party STT or TTS.
 - 🔘 **Push-to-talk + manual VAD** — hold <kbd>SPACE</kbd> (or the on-screen Hold button) to talk; `activity_start` / `activity_end` markers gate each turn.
-- 📐 **16 whiteboard tools** — 7 layout/state tools, 6 high-level diagram templates (triangle, coordinate plane, unit circle, parabola, number line, equation), and 3 primitives.
+- 📐 **18 tools** — 9 layout/state/interactive tools (including avatar emotes and quizzes), 6 high-level diagram templates (triangle, coordinate plane, unit circle, parabola, number line, equation), and 3 primitives.
 - 📚 **NCERT/CBSE-aligned** — tuned for Classes 6–10 with Indian problem formats, unit conventions, and bilingual examples.
 - 🌐 **EN / Hindi code-switching** — Sparks picks the blend automatically; you can also pin the language via the pill in the header.
 - 📝 **Live captions** — `input_audio_transcription` and `output_audio_transcription` stream both sides of the conversation in real time.
-- 🦉 **Lip-synced owl avatar** — hand-drawn SVG owl with large round glasses, ear tufts, and talon feet; mouth driven by audio RMS via `AnalyserNode`; eyes track the mouse; blinking idle animation.
+- 🦉 **Lip-synced owl avatar** — hand-drawn SVG owl with large round glasses, ear tufts, and talon feet; mouth openness driven by audio RMS and mouth *shape* by frequency-band balance (rounded "oo" vs wide "ee"); reacts with emotions (happy, thinking, encouraging, surprised, celebrating) via the model-called `emote` tool; eyes track the mouse; blinking idle animation.
 - ✏️ **Hand-drawn math** — Rough.js gives every geometric diagram a pencil-sketch aesthetic; KaTeX renders crisp LaTeX equations; function-plot.js handles 2D plots.
 - 📦 **Zero npm / build step on the frontend** — KaTeX, function-plot.js, and Rough.js are loaded from CDN. Open `index.html` and it just works.
 - 🐍 **Single-file Python backend** — `server.py` is the entire FastAPI bridge. Four pip packages, no database, no queue.
@@ -174,10 +177,10 @@ While the server is running, open <http://127.0.0.1:8765/architecture> for a col
 
 ## 📐 Whiteboard tools Sparks can call
 
-16 tools total, in three categories.
+18 tools total, in three categories.
 
 <details>
-<summary><strong>Layout / state (7 tools)</strong></summary>
+<summary><strong>Layout / state / interactive (9 tools)</strong></summary>
 
 | Tool | Purpose |
 |------|---------|
@@ -188,6 +191,8 @@ While the server is running, open <http://127.0.0.1:8765/architecture> for a col
 | `clear_board()` | Wipe the whiteboard and reset the step tracker |
 | `focus(label)` | Elevate one card to "current focus"; previous focus dims |
 | `highlight(label)` | Flash any card for ~1.6 s to draw attention |
+| `emote(expression)` | Avatar reaction — `happy`, `thinking`, `encouraging`, `surprised`, or `celebrating` |
+| `show_quiz(question, options, correct_index, label)` | Clickable multiple-choice question; the student's pick is sent back to Sparks |
 
 </details>
 
@@ -235,6 +240,9 @@ Both directions share one WebSocket, mixing binary PCM frames with JSON text fra
 | `text` | `{text: string}` | Typed turn, forwarded via `send_client_content` |
 | `tool_result` | `{id: string, ok: boolean}` | Browser ack for a completed tool call |
 | `client_log` | `{level: "info"\|"warn"\|"error", msg: string}` | Relays browser console to the Python terminal as `[browser] …` |
+| `student_info` | `{name: string, class: string}` | Onboarding form result — Sparks greets the student by name and calibrates to their class |
+| `quiz_answer` | `{label, question, selected_index, selected_text, correct}` | Student clicked a quiz option — Sparks reacts to the result |
+| `image` | `{mime: string, data: base64}` | Photo of a homework problem (client-side downscaled to ~1280 px JPEG) — Sparks reads and solves it |
 
 </details>
 
